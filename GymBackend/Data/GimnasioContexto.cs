@@ -14,5 +14,6 @@ namespace GymBackend.Data
         public DbSet<Pago> Pagos { get; set; }
         public DbSet<PlanPago> PlanesPago { get; set; }
         public DbSet<Horario> Horarios { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
     }
 }
