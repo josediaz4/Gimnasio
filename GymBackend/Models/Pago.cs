@@ -4,8 +4,9 @@ namespace GymBackend.Models
 {
     public class Pago
     {
+        [Key]
         public int IdPago { get; set; }
-        public int idSocio { get; set; }
+        public int IdSocio { get; set; }
         public int IdPlan { get; set; }
         [Required]
         public DateTime FechaPago { get; set; }

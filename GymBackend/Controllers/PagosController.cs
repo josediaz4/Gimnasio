@@ -9,7 +9,7 @@ namespace GymBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PagosController : Controller
+    public class PagosController : ControllerBase
     {
         private readonly GimnasioContexto _contexto;
         private readonly IMapper _mapper;
@@ -25,7 +25,7 @@ namespace GymBackend.Controllers
         public async Task<ActionResult<IEnumerable<PagoDTO>>> GetPagos()
         {
             var pagos = await _contexto.Pagos
-                .Include(s => s.Socio)
+                .Include(p => p.Socio)
                 .Include(p => p.Plan)
                 .ToListAsync();
 
@@ -37,7 +37,7 @@ namespace GymBackend.Controllers
         public async Task<ActionResult<PagoDTO>> GetPago(int id)
         {
             var pago = await _contexto.Pagos
-                .Include(s => s.Socio)
+                .Include(p => p.Socio)
                 .Include(p => p.Plan)
                 .FirstOrDefaultAsync(x => x.IdPago == id);
 
@@ -48,19 +48,26 @@ namespace GymBackend.Controllers
 
         //POST: api/pagos
         [HttpPost]
-        public async Task<ActionResult<Pago>> PostPago(Pago pago)
+        public async Task<ActionResult<PagoDTO>> PostPago(PagoDTO pagoDTO)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var socioExiste = await _contexto.Socios.AnyAsync(s => s.IdSocio == pagoDTO.IdSocio);
+            var planExiste = await _contexto.PlanesPago.AnyAsync(p => p.IdPlan == pagoDTO.IdPlan);
 
+            if (!socioExiste || !planExiste)
+                return BadRequest("El socio o el plan no existen.");
+
+            var pago = _mapper.Map<Pago>(pagoDTO);
             pago.FechaPago = DateTime.UtcNow;
+
             _contexto.Pagos.Add(pago);
             await _contexto.SaveChangesAsync();
+
+            var result = _mapper.Map<PagoDTO>(pago);
 
             return CreatedAtAction(
                 nameof(GetPago),
                 new { id = pago.IdPago },
-                pago);
+                result);
         }
 
         //DELETE: api/pagos/5

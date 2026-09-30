@@ -8,11 +8,7 @@ namespace GymBackend.Mapping
     {
         public HorarioProfile()
         {
-            CreateMap<HorarioDTO, Horario>()
-                .ForMember(dest => dest.HoraInicio,
-                            opt => opt.MapFrom(src => $"{src.HoraInicio:hh\\:mm}"))
-                .ForMember(dest => dest.HoraFin,
-                            opt => opt.MapFrom(src => $"{src.HoraInicio:hh\\:mm}"));
+            CreateMap<HorarioDTO, Horario>().ReverseMap();
         }
     }
 }

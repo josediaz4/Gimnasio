@@ -8,7 +8,7 @@ namespace GymBackend.Mapping
     {
         public PlanProfile()
         {
-            CreateMap<PlanPago, PlanPagoDTO>();
+            CreateMap<PlanPago, PlanPagoDTO>().ReverseMap();
         }
     }
 }

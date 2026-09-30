@@ -9,7 +9,7 @@ namespace GymBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class HorariosController : Controller
+    public class HorariosController : ControllerBase
     {
         private readonly GimnasioContexto _contexto;
         private readonly IMapper _mapper;
@@ -39,53 +39,36 @@ namespace GymBackend.Controllers
 
         // POST: api/horarios
         [HttpPost]
-        public async Task<ActionResult<Horario>> PostHorario([FromBody] Horario horario)
+        public async Task<ActionResult<HorarioDTO>> PostHorario([FromBody] HorarioDTO horarioDTO)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var horario = _mapper.Map<Horario>(horarioDTO);
 
-            try
-            {
-                _contexto.Horarios.Add(horario);
-                await _contexto.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
+            _contexto.Horarios.Add(horario);
+            await _contexto.SaveChangesAsync();
+
+            var result = _mapper.Map<HorarioDTO>(horario);
 
             return CreatedAtAction(
                 nameof(GetHorario),
                 new { id = horario.IdHorario },
-                horario);
+                result);
         }
 
         // PUT: api/horarios/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutHorario(int id, [FromBody] Horario horario)
+        public async Task<IActionResult> PutHorario(int id, [FromBody] HorarioDTO horarioDTO)
         {
-            if (id != horario.IdHorario)
+            if (id != horarioDTO.IdHorario)
                 return BadRequest("El ID no coincide con el horario enviado.");
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            try
-            {
-                _contexto.Entry(horario).State = EntityState.Modified;
-                await _contexto.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_contexto.Horarios.Any(h => h.IdHorario == id))
-                    return NotFound("El horario no existe.");
-                else
-                {
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
+
+            var horario = _contexto.Horarios.FindAsync(id);
+
+            if (horario == null)
+                return NotFound("El horario no exíste.");
+
+            await _mapper.Map(horarioDTO, horario);  //<--actualiza las propiedades
+            await _contexto.SaveChangesAsync();
+
             return NoContent();
         }
 
@@ -96,15 +79,10 @@ namespace GymBackend.Controllers
             var horario = await _contexto.Horarios.FindAsync(id);
             if (horario == null)
                 return NotFound("El horario no existe.");
-            try
-            {
-                _contexto.Horarios.Remove(horario);
-                await _contexto.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
+
+            _contexto.Horarios.Remove(horario);
+            await _contexto.SaveChangesAsync();
+
             return NoContent();
         }
 

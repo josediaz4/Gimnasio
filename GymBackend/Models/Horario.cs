@@ -4,6 +4,7 @@ namespace GymBackend.Models
 {
     public class Horario
     {
+        [Key]
         public int IdHorario { get; set; }
         [Required(ErrorMessage = "El nombre de la actividad es obligatorio.")]
         [StringLength(100, ErrorMessage = "El nombre no puede superar los {0} caracteres.")]

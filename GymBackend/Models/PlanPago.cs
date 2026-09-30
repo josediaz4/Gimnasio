@@ -4,6 +4,7 @@ namespace GymBackend.Models
 {
     public class PlanPago
     {
+        [Key]
         public int IdPlan { get; set; }
         [Required(ErrorMessage = "El Nombre del plan es obligatorio.")]
         [StringLength(50, ErrorMessage = "El nombre no puede superar los {0} caracteres.")]

@@ -9,7 +9,7 @@ namespace GymBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PlanesPagoController : Controller
+    public class PlanesPagoController : ControllerBase
     {
         private readonly GimnasioContexto _contexto;
         private readonly IMapper _mapper;
@@ -39,39 +39,34 @@ namespace GymBackend.Controllers
 
         //POST: api/planesPago
         [HttpPost]
-        public async Task<ActionResult<PlanPago>> PostPlanPago([FromBody]PlanPago plan)
+        public async Task<ActionResult<PlanPagoDTO>> PostPlanPago([FromBody] PlanPagoDTO planPagoDTO)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var planPago = _mapper.Map<PlanPago>(planPagoDTO);
 
-            _contexto.PlanesPago.Add(plan);
+            _contexto.PlanesPago.Add(planPago);
             await _contexto.SaveChangesAsync();
+
+            var result = _mapper.Map<PlanPagoDTO>(planPago);
 
             return CreatedAtAction(
                 nameof(GetPlanPago),
-                new { id = plan.IdPlan },
-                plan);
+                new { id = planPago.IdPlan },
+                result);
         }
 
         //PUT: api/planesPago/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPlanPago(int id, PlanPago plan)
+        public async Task<IActionResult> PutPlanPago(int id, PlanPagoDTO planPagoDTO)
         {
-            if (id != plan.IdPlan) 
+            if (id != planPagoDTO.IdPlan)
                 return BadRequest("El ID no coincide con el plan enviado.");
 
-            try
-            {
-                _contexto.Entry(plan).State = EntityState.Modified;
-                await _contexto.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_contexto.PlanesPago.Any(p => p.IdPlan == id))
-                    return NotFound("El Plan no existe.");
-                else
-                    throw; //dejamos que el sist maneje el error si es algo mas grabe
-            }            
+            var planExistente = await _contexto.PlanesPago.FindAsync(id);
+            if (planExistente == null)
+                return NotFound("El plan no exíste.");
+
+            _mapper.Map(planPagoDTO, planExistente);
+            await _contexto.SaveChangesAsync();
 
             return NoContent();
         }
