@@ -10,6 +10,17 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//Configuracion de CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+        .AllowAnyMethod()
+        .AllowAnyHeader();
+    });
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -112,6 +123,9 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 //Resto de Middlewares
 app.UseHttpsRedirection();
+
+//activamos politicas CORS
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 
