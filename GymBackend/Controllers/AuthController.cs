@@ -42,8 +42,8 @@ namespace GymBackend.Controllers
         {
             var claims = new[]
             {
-                new Claim(ClaimTypes.Name, usuario.Email),
-                new Claim(ClaimTypes.Role, usuario.Rol)
+                new Claim("name", usuario.Email),
+                new Claim("role", usuario.Rol)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

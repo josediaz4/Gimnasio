@@ -1,32 +1,38 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 function Login() {
+  const { login } = useContext(AuthContext); //acceso al login del contexto
   const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const response = await fetch("https://localhost:7274/api/Auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
       if (!response.ok) {
         throw new Error("Credenciales invalidas.");
       }
 
       const data = await response.json();
+      //decodificar el token jwt
+      const decoded = jwtDecode(data.token);
+      //guardar en el contxto: token + datos del payload
+      login({
+        token: data.token,
+        name: decoded.name,
+        role: decoded.role,
+      });
       console.log("Login exitoso: ", data);
-
-      //guardar el token en localStorage para usarlo cuando sea necesario
-      localStorage.setItem("token", data.token);
-
       navigate("/dashboard");
     } catch (error) {
       console.error("Error en el login: ", error.message);
