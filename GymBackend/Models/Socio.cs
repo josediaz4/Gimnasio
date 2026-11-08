@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using GymBackend.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace GymBackend.Models
 {
@@ -16,7 +17,7 @@ namespace GymBackend.Models
         public string Email { get; set; }
         public string Telefono { get; set; }
         public DateTime FechaInscripcion { get; set; }
-        public bool EstadoMembresia { get; set; }
+        public EstadoMembresia EstadoMembresia { get; set; }
 
         // Relación con Usuario
         public int? IdUsuario { get; set; }
@@ -24,5 +25,9 @@ namespace GymBackend.Models
 
         // Relación con Pagos
         public ICollection<Pago> Pagos { get; set; }
+
+        // Relación con Pagos
+        public ICollection<Asistencia> Asistencias { get; set; }
     }
+
 }

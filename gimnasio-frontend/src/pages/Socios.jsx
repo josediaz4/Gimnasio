@@ -1,26 +1,41 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { apiFetch } from "../utils/api";
+import ModalCrearSocio from "../components/Socios/ModalCrearSocio";
 
 function Socios() {
+  const API_URL = "https://localhost:7274/api/Socios";
+
   const { user, logout } = useContext(AuthContext);
   const [socios, setSocios] = useState([]);
 
+  const cargarSocios = async () => {
+    try {
+      const respuesta = await fetch(API_URL, {}, user.token);
+      const data = await respuesta.json();
+      setSocios(data);
+    } catch (error) {
+      console.error(error.message);
+      if (error.message == "Unautorized") logout();
+    }
+  };
+
   useEffect(() => {
-    const fetchSocios = async () => {
-      try {
-        const data = await apiFetch(
-          "https://localhost:7274/api/socios",
-          {},
-          user.token,
-        );
-        setSocios(data);
-      } catch (error) {
-        console.error(error.message);
-        if (error.message === "Unautorized") logout();
-      }
-    };
-    if (user?.token && user?.role === "Administrador") fetchSocios();
+    // const fetchSocios = async () => {
+    //   try {
+    //     const data = await apiFetch(
+    //       "https://localhost:7274/api/socios",
+    //       {},
+    //       user.token,
+    //     );
+    //     setSocios(data);
+    //   } catch (error) {
+    //     console.error(error.message);
+    //     if (error.message === "Unautorized") logout();
+    //   }
+    // };
+    cargarSocios();
+    if (user?.token && user?.role === "Administrador") cargarSocios();
   }, [user]);
 
   return (
@@ -28,10 +43,18 @@ function Socios() {
       <h2 className="mb-3">Gestión de socios</h2>
       <div className="card shadow">
         <div className="card-body">
-          <p className="card-text">
-            Aquí podrás administrar el listado de socios, agregar nuevos y
-            editar información existente.
-          </p>
+          {/*Boton para abrir el modal */}
+          <div className="d-flex justify-content-end mt-4">
+            <button
+              className="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#modalCrearSocio"
+            >
+              ➕ Nuevo Socio
+            </button>
+            {/* Modal de creación */}
+            <ModalCrearSocio onSocioCreado={cargarSocios} />
+          </div>
           <table className="table table-striped mt-3">
             <thead>
               <tr>

@@ -61,12 +61,12 @@ namespace GymBackend.Controllers
             if (id != horarioDTO.IdHorario)
                 return BadRequest("El ID no coincide con el horario enviado.");
 
-            var horario = _contexto.Horarios.FindAsync(id);
+            var horario = await _contexto.Horarios.FindAsync(id);
 
             if (horario == null)
                 return NotFound("El horario no exíste.");
 
-            await _mapper.Map(horarioDTO, horario);  //<--actualiza las propiedades
+            _mapper.Map(horarioDTO, horario);  //<--actualiza las propiedades
             await _contexto.SaveChangesAsync();
 
             return NoContent();

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GymBackend.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -36,7 +36,7 @@ namespace GymBackend.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     NombrePlan = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Precio = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
-                    CantidadDias = table.Column<int>(type: "int", nullable: false)
+                    CantidadClases = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -51,7 +51,8 @@ namespace GymBackend.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ContraseñaHash = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    Rol = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Rol = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IdSocio = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -66,11 +67,11 @@ namespace GymBackend.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Apellido = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DNI = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DNI = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Telefono = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaInscripcion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EstadoMembresia = table.Column<bool>(type: "bit", nullable: false),
+                    EstadoMembresia = table.Column<int>(type: "int", nullable: false),
                     IdUsuario = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -84,6 +85,27 @@ namespace GymBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Asistencias",
+                columns: table => new
+                {
+                    IdAsistencia = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IdSocio = table.Column<int>(type: "int", nullable: false),
+                    FechaAsistencia = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AsistenciaValida = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Asistencias", x => x.IdAsistencia);
+                    table.ForeignKey(
+                        name: "FK_Asistencias_Socios_IdSocio",
+                        column: x => x.IdSocio,
+                        principalTable: "Socios",
+                        principalColumn: "IdSocio",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Pagos",
                 columns: table => new
                 {
@@ -92,6 +114,7 @@ namespace GymBackend.Migrations
                     IdSocio = table.Column<int>(type: "int", nullable: false),
                     IdPlan = table.Column<int>(type: "int", nullable: false),
                     FechaPago = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaVencimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Monto = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
                     MetodoPago = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
@@ -113,6 +136,11 @@ namespace GymBackend.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Asistencias_IdSocio",
+                table: "Asistencias",
+                column: "IdSocio");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Pagos_IdPlan",
                 table: "Pagos",
                 column: "IdPlan");
@@ -123,14 +151,31 @@ namespace GymBackend.Migrations
                 column: "IdSocio");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Socios_DNI",
+                table: "Socios",
+                column: "DNI",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Socios_Email",
+                table: "Socios",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Socios_IdUsuario",
                 table: "Socios",
-                column: "IdUsuario");
+                column: "IdUsuario",
+                unique: true,
+                filter: "[IdUsuario] IS NOT NULL");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Asistencias");
+
             migrationBuilder.DropTable(
                 name: "Horarios");
 

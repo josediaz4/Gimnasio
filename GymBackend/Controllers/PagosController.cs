@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GymBackend.Data;
 using GymBackend.DTOs;
+using GymBackend.Enums;
 using GymBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,47 @@ namespace GymBackend.Controllers
             if (pago == null) return NotFound();
 
             return _mapper.Map<PagoDTO>(pago);
+        }
+
+        //POST: api/renovar
+        [HttpPost("renovar")]
+        public async Task<ActionResult> RenovarMembresia(RenovarMembresiaDTO dto)
+        {
+            await using var transaction = await _contexto.Database.BeginTransactionAsync();
+
+            try
+            {
+                var socio = await _contexto.Socios.FirstOrDefaultAsync(s => s.IdSocio == dto.IdSocio);
+                if (socio == null)
+                    return NotFound("Socio no encontrado.");
+
+                var plan = await _contexto.PlanesPago.FirstOrDefaultAsync(pp => pp.IdPlan == dto.IdPlan);
+                if (plan == null)
+                    return BadRequest("Plan no encontrado.");
+
+                var pago = new Pago
+                {
+                    IdSocio = socio.IdSocio,
+                    IdPlan = plan.IdPlan,
+                    FechaPago = DateTime.UtcNow,
+                    FechaVencimiento = DateTime.UtcNow.AddMonths(1),
+                    Monto = plan.Precio,
+                    MetodoPago = dto.MetodoPago
+                };
+
+                _contexto.Pagos.Add(pago);
+                socio.EstadoMembresia = EstadoMembresia.Activo;
+
+                await _contexto.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok("Membresía renovada correctamente.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         //POST: api/pagos

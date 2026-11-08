@@ -8,9 +8,11 @@ namespace GymBackend.Mapping
     {
         public SocioProfile()
         {
+            CreateMap<CrearSocioDTO, Socio>();
             CreateMap<Socio, SocioDTO>()
-                .ForMember(dest => dest.NombreCompleto,
-                            opt => opt.MapFrom(src => src.Nombre + " " + src.Apellido));
+                .ForMember(
+                dest => dest.NombreCompleto,
+                opt => opt.MapFrom(src => $"{src.Nombre} {src.Apellido}"));
         }
     }
 }

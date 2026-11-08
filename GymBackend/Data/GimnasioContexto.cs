@@ -15,6 +15,7 @@ namespace GymBackend.Data
         public DbSet<PlanPago> PlanesPago { get; set; }
         public DbSet<Horario> Horarios { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Asistencia> Asistencias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +35,19 @@ namespace GymBackend.Data
                 .WithOne(u => u.Socio)
                 .HasForeignKey<Socio>(s => s.IdUsuario);
 
+            modelBuilder.Entity<Socio>()
+                .HasIndex(s => s.DNI)
+                .IsUnique();
+
+            modelBuilder.Entity<Socio>()
+                .HasIndex(s => s.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<Asistencia>()
+                .HasOne(a => a.Socio)
+                .WithMany(s => s.Asistencias)
+                .HasForeignKey(a => a.IdSocio);
+
             // Precision para DECIMAL
             modelBuilder.Entity<Pago>()
                 .Property(p => p.Monto)
@@ -44,4 +58,5 @@ namespace GymBackend.Data
                 .HasPrecision(10, 2);
         }
     }
+
 }

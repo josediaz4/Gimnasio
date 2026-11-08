@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GymBackend.Migrations
 {
     [DbContext(typeof(GimnasioContexto))]
-    [Migration("20260930004845_FixUsuarioSocioMigration")]
-    partial class FixUsuarioSocioMigration
+    [Migration("20261023022833_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,30 @@ namespace GymBackend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("GymBackend.Models.Asistencia", b =>
+                {
+                    b.Property<int>("IdAsistencia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdAsistencia"));
+
+                    b.Property<bool>("AsistenciaValida")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaAsistencia")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdSocio")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdAsistencia");
+
+                    b.HasIndex("IdSocio");
+
+                    b.ToTable("Asistencias");
+                });
 
             modelBuilder.Entity("GymBackend.Models.Horario", b =>
                 {
@@ -67,6 +91,9 @@ namespace GymBackend.Migrations
                     b.Property<DateTime>("FechaPago")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime>("FechaVencimiento")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("IdPlan")
                         .HasColumnType("int");
 
@@ -98,7 +125,7 @@ namespace GymBackend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdPlan"));
 
-                    b.Property<int>("CantidadDias")
+                    b.Property<int>("CantidadClases")
                         .HasColumnType("int");
 
                     b.Property<string>("NombrePlan")
@@ -129,14 +156,14 @@ namespace GymBackend.Migrations
 
                     b.Property<string>("DNI")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool>("EstadoMembresia")
-                        .HasColumnType("bit");
+                    b.Property<int>("EstadoMembresia")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("FechaInscripcion")
                         .HasColumnType("datetime2");
@@ -153,6 +180,12 @@ namespace GymBackend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdSocio");
+
+                    b.HasIndex("DNI")
+                        .IsUnique();
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.HasIndex("IdUsuario")
                         .IsUnique()
@@ -190,6 +223,17 @@ namespace GymBackend.Migrations
                     b.ToTable("Usuarios");
                 });
 
+            modelBuilder.Entity("GymBackend.Models.Asistencia", b =>
+                {
+                    b.HasOne("GymBackend.Models.Socio", "Socio")
+                        .WithMany("Asistencias")
+                        .HasForeignKey("IdSocio")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Socio");
+                });
+
             modelBuilder.Entity("GymBackend.Models.Pago", b =>
                 {
                     b.HasOne("GymBackend.Models.PlanPago", "Plan")
@@ -225,6 +269,8 @@ namespace GymBackend.Migrations
 
             modelBuilder.Entity("GymBackend.Models.Socio", b =>
                 {
+                    b.Navigation("Asistencias");
+
                     b.Navigation("Pagos");
                 });
 

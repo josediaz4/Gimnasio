@@ -108,6 +108,15 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+//Cargador de datos iniciales(Seeder)
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider
+        .GetRequiredService<GimnasioContexto>();
+
+    await DataSeeder.SeedAsync(context);
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
