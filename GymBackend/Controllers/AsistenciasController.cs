@@ -27,6 +27,7 @@ namespace GymBackend.Controllers
         }
 
         //GET: api/asistencias/socio/1
+        [HttpGet("socio/{idsocio}")]
         public async Task<ActionResult<IEnumerable<AsistenciaDTO>>> GetAsistenciasPorSocio(int idSocio)
         {
             var socioExiste = await _contexto.Socios.AnyAsync(x => x.IdSocio == idSocio);
@@ -58,7 +59,7 @@ namespace GymBackend.Controllers
             var ultimoPago = await _contexto.Pagos
                 .Include(p => p.Plan)
                 .Where(p => p.IdSocio == idSocio)
-                .OrderByDescending(p => p.FechaVencimiento)
+                .OrderByDescending(p => p.FechaPago)
                 .FirstOrDefaultAsync();
 
             if (ultimoPago == null)
@@ -98,6 +99,12 @@ namespace GymBackend.Controllers
             if (ultimoPago.FechaVencimiento.Date < DateTime.UtcNow.Date)
                 return BadRequest("La membresía está vencida.");
 
+            var hoy = DateTime.UtcNow.Date;
+            var asistenciaHoy = await _contexto.Asistencias.AnyAsync(a => a.IdSocio == dto.IdSocio && a.AsistenciaValida && a.FechaAsistencia.Date == hoy);
+
+            if (asistenciaHoy)
+                return BadRequest(new { mensaje = "El socio ya registró asistencia hoy." });
+
             var asistenciasUtilizadas = await _contexto.Asistencias
                                         .CountAsync(a => a.IdSocio == dto.IdSocio && a.AsistenciaValida && a.FechaAsistencia >= ultimoPago.FechaPago);
 
@@ -119,7 +126,7 @@ namespace GymBackend.Controllers
             return Ok("Asistencia registada correctamente.");
         }
 
-        //PUT: api/asistencias/5
+        //PUT: api/asistencias/5/invalidar
         [HttpPut("{id}/invalidar")]
         public async Task<ActionResult> InvalidarAsistencia(int id)
         {

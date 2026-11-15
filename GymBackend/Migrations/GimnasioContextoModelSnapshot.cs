@@ -125,6 +125,9 @@ namespace GymBackend.Migrations
                     b.Property<int>("CantidadClases")
                         .HasColumnType("int");
 
+                    b.Property<int>("DuracionDias")
+                        .HasColumnType("int");
+
                     b.Property<string>("NombrePlan")
                         .IsRequired()
                         .HasMaxLength(50)

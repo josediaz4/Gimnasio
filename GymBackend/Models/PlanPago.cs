@@ -13,6 +13,8 @@ namespace GymBackend.Models
         public decimal Precio { get; set; }
         [Range(1, 31, ErrorMessage = "El cantidad debe estar entre {0} y {1} clases.")]
         public int CantidadClases { get; set; }
+        [Range(1,365)]
+        public int DuracionDias { get; set; }
 
         //Relacion con Pagos
         public ICollection<Pago> Pagos { get; set; }

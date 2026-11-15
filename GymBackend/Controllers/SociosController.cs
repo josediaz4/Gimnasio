@@ -100,7 +100,7 @@ namespace GymBackend.Controllers
 
             var pagos = await _contexto.Pagos
                 .Include(p => p.Socio)
-                .Include(p => p.Plan)             
+                .Include(p => p.Plan)
                 .ToListAsync();
 
             var resultado = pagos
@@ -159,7 +159,7 @@ namespace GymBackend.Controllers
                     IdSocio = socio.IdSocio,
                     IdPlan = plan.IdPlan,
                     FechaPago = DateTime.UtcNow,
-                    FechaVencimiento = DateTime.UtcNow.AddMonths(1),
+                    FechaVencimiento = DateTime.UtcNow.AddDays(plan.DuracionDias),
                     Monto = plan.Precio,
                     MetodoPago = socioDTO.MetodoPago
                 };
@@ -180,7 +180,7 @@ namespace GymBackend.Controllers
                 await transaction.RollbackAsync();
                 throw;
             }
-            
+
         }
 
         //PUT: api/socios/5

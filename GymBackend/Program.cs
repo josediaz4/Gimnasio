@@ -13,9 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 //Configuracion de CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("ReactPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://localhost:5173")
         .AllowAnyMethod()
         .AllowAnyHeader();
     });
@@ -134,7 +136,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
 
 //activamos politicas CORS
-app.UseCors("AllowFrontend");
+app.UseCors("ReactPolicy");
 
 app.UseAuthentication();
 
