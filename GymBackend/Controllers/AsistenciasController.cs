@@ -21,9 +21,19 @@ namespace GymBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Asistencia>>> GetAsistencias()
         {
-            return await _contexto.Asistencias
+            var asistencias = await _contexto.Asistencias
+                .Include(a => a.Socio)
                 .OrderByDescending(a => a.FechaAsistencia)
-                .ToListAsync();
+                .Select(a => new AsistenciaDTO
+                {
+                    IdAsistencia = a.IdAsistencia,
+                    IdSocio = a.IdSocio,
+                    NombreCompletoSocio = a.Socio.Nombre + " " + a.Socio.Apellido,
+                    FechaAsistencia = a.FechaAsistencia,
+                    AsistenciaValida = a.AsistenciaValida
+                }).ToListAsync();
+
+            return Ok(asistencias);
         }
 
         //GET: api/asistencias/socio/1
