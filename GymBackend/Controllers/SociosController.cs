@@ -3,6 +3,7 @@ using GymBackend.Data;
 using GymBackend.DTOs;
 using GymBackend.DTOs.Socio;
 using GymBackend.Enums;
+using GymBackend.Helpers;
 using GymBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,8 +27,22 @@ namespace GymBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SocioDTO>>> GetSocios()
         {
-            var socios = await _contexto.Socios.ToListAsync();
-            return _mapper.Map<List<SocioDTO>>(socios);
+            var datos = await _contexto.Socios
+                .Select(s => new
+                {
+                    Socio = s,
+                    UltimoVencimiento = s.Pagos.Max(p => (DateTime?)p.FechaVencimiento)
+                }).ToListAsync();
+
+            var resultado = datos.Select(d =>
+            {
+                var dto = _mapper.Map<SocioDTO>(d.Socio);
+                dto.EstadoMembresia = MembresiaHelper.Calcular(d.Socio.EstadoMembresia, d.UltimoVencimiento);
+
+                return dto;
+            }).ToList();
+
+            return Ok(resultado);
         }
 
         //GET: api/socios/5
@@ -36,11 +51,16 @@ namespace GymBackend.Controllers
         {
             var socio = await _contexto.Socios.FindAsync(id);
             if (socio == null)
-            {
                 return NotFound();
-            }
 
-            return _mapper.Map<SocioDTO>(socio);
+            var ultimoVencimiento = await _contexto.Pagos
+                .Where(p => p.IdSocio == id)
+                .MaxAsync(p => (DateTime?)p.FechaVencimiento);
+
+            var dto = _mapper.Map<SocioDTO>(socio);
+            dto.EstadoMembresia = MembresiaHelper.Calcular(socio.EstadoMembresia, ultimoVencimiento);
+
+            return dto;
         }
 
         //GET: api/socios/5/historial-pagos
@@ -82,7 +102,7 @@ namespace GymBackend.Controllers
             {
                 IdSocio = socio.IdSocio,
                 NombreCompleto = $"{socio.Nombre} {socio.Apellido}",
-                EstadoMembresia = socio.EstadoMembresia,
+                EstadoMembresia = MembresiaHelper.Calcular(socio.EstadoMembresia, ultimoPago.FechaVencimiento),
                 NombrePlan = ultimoPago.Plan.NombrePlan,
                 FechaPago = ultimoPago.FechaPago,
                 FechaVencimiento = ultimoPago.FechaVencimiento,
@@ -119,7 +139,7 @@ namespace GymBackend.Controllers
                     NombreCompleto = $"{p.Socio.Nombre} {p.Socio.Apellido}",
                     NombrePlan = p.Plan.NombrePlan,
                     FechaVencimiento = p.FechaVencimiento,
-                    EstadoMembresia = p.Socio.EstadoMembresia,
+                    EstadoMembresia = MembresiaHelper.Calcular(p.Socio.EstadoMembresia, p.FechaVencimiento),
                     DiasRestantes = (p.FechaVencimiento.Date - hoy).Days
                 })
                 .ToList();
@@ -250,14 +270,7 @@ namespace GymBackend.Controllers
             if (socio == null)
                 return NotFound("El socio no existe.");
 
-            var ultimoPago = await _contexto.Pagos
-                .Where(p => p.IdSocio == id)
-                .OrderByDescending(p => p.FechaVencimiento)
-                .FirstOrDefaultAsync();
-
-            var vigente = ultimoPago != null && ultimoPago.FechaVencimiento.Date >= DateTime.UtcNow.Date;
-
-            socio.EstadoMembresia = vigente ? EstadoMembresia.Activo : EstadoMembresia.Vencido;
+            socio.EstadoMembresia = EstadoMembresia.Activo;
 
             await _contexto.SaveChangesAsync();
             return NoContent();
