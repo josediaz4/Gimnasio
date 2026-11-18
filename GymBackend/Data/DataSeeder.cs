@@ -13,19 +13,22 @@ namespace GymBackend.Data
                     {
                         NombrePlan = "Clase",
                         Precio = 6000,
-                        CantidadClases = 1
+                        CantidadClases = 1,
+                        DuracionDias = 1
                     },
                     new PlanPago
                     {
                         NombrePlan = "3 veces por Semana",
                         Precio = 20000,
-                        CantidadClases = 12
+                        CantidadClases = 12,
+                        DuracionDias = 30
                     },
                     new PlanPago
                     {
                         NombrePlan = "5 veces por Semana",
                         Precio = 23000,
-                        CantidadClases = 20
+                        CantidadClases = 20,
+                        DuracionDias = 30
                     }
                     );
             }

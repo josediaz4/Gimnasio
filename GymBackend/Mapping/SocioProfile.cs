@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using GymBackend.DTOs;
+using GymBackend.DTOs.Socio;
 using GymBackend.Models;
 
 namespace GymBackend.Mapping

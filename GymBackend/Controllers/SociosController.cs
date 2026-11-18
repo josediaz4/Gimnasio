@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GymBackend.Data;
 using GymBackend.DTOs;
+using GymBackend.DTOs.Socio;
 using GymBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -185,16 +186,24 @@ namespace GymBackend.Controllers
 
         //PUT: api/socios/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSocio(int id, SocioDTO socioDTO)
+        public async Task<IActionResult> PutSocio(int id, ActualizarSocioDTO dto)
         {
-            if (id != socioDTO.IdSocio)
-                return BadRequest("El ID no coincide con el socio enviado.");
-
             var socioExist = await _contexto.Socios.FindAsync(id);
             if (socioExist == null)
                 return NotFound("El socio no existe.");
 
-            _mapper.Map(socioDTO, socioExist);
+            if (await _contexto.Socios.AnyAsync(s => s.IdSocio != id && s.Email == dto.Email))
+                return BadRequest("Ya existe un socio con ese email");
+            if (await _contexto.Socios.AnyAsync(s => s.IdSocio != id && s.DNI == dto.DNI))
+                return BadRequest("Ya existe un socio con ese DNI.");
+
+
+            socioExist.Nombre = dto.Nombre;
+            socioExist.Apellido = dto.Apellido;
+            socioExist.DNI = dto.DNI;
+            socioExist.Email = dto.Email;
+            socioExist.Telefono = dto.Telefono ?? "";
+
             await _contexto.SaveChangesAsync();
 
             return NoContent();
