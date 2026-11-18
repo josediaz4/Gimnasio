@@ -2,6 +2,7 @@
 using GymBackend.Data;
 using GymBackend.DTOs;
 using GymBackend.DTOs.Socio;
+using GymBackend.Enums;
 using GymBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -217,11 +218,50 @@ namespace GymBackend.Controllers
             if (socio == null)
                 return NotFound("El socio no existe.");
 
+            var tieneHistorial = await _contexto.Pagos.AnyAsync(p => p.IdSocio == id) || await _contexto.Asistencias.AnyAsync(a => a.IdSocio == id);
+            if (tieneHistorial)
+                return BadRequest("El socio tiene historial de pagos o asistencias. Debe suspenderlo.");
+
             _contexto.Socios.Remove(socio);
             await _contexto.SaveChangesAsync();
 
             return NoContent();
         }
 
+        //PUT: api/socios/5/suspender
+        [HttpPut("{id}/suspender")]
+        public async Task<IActionResult> Suspender(int id)
+        {
+            var socio = await _contexto.Socios.FindAsync(id);
+            if (socio == null)
+                return NotFound("El socio no existe.");
+
+            socio.EstadoMembresia = EstadoMembresia.Suspendido;
+            await _contexto.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        //PUT: api/socios/5/reactivar
+        [HttpPut("{id}/reactivar")]
+        public async Task<IActionResult> Reactivar(int id)
+        {
+            var socio = await _contexto.Socios.FindAsync(id);
+            if (socio == null)
+                return NotFound("El socio no existe.");
+
+            var ultimoPago = await _contexto.Pagos
+                .Where(p => p.IdSocio == id)
+                .OrderByDescending(p => p.FechaVencimiento)
+                .FirstOrDefaultAsync();
+
+            var vigente = ultimoPago != null && ultimoPago.FechaVencimiento.Date >= DateTime.UtcNow.Date;
+
+            socio.EstadoMembresia = vigente ? EstadoMembresia.Activo : EstadoMembresia.Vencido;
+
+            await _contexto.SaveChangesAsync();
+            return NoContent();
+
+        }
     }
 }

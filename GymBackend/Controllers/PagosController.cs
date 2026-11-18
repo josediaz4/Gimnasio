@@ -59,6 +59,9 @@ namespace GymBackend.Controllers
                 if (socio == null)
                     return NotFound("Socio no encontrado.");
 
+                if (socio.EstadoMembresia == EstadoMembresia.Suspendido)
+                    return BadRequest("El socio está suspendido. Reactivarlo antes de renovar.");
+
                 var plan = await _contexto.PlanesPago.FirstOrDefaultAsync(pp => pp.IdPlan == dto.IdPlan);
                 if (plan == null)
                     return BadRequest("Plan no encontrado.");

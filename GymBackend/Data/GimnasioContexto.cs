@@ -23,12 +23,14 @@ namespace GymBackend.Data
             modelBuilder.Entity<Pago>()
                 .HasOne(p => p.Socio)
                 .WithMany(s => s.Pagos)
-                .HasForeignKey(p => p.IdSocio);
+                .HasForeignKey(p => p.IdSocio)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Pago>()
                 .HasOne(p => p.Plan)
                 .WithMany(pp => pp.Pagos)
-                .HasForeignKey(p => p.IdPlan);
+                .HasForeignKey(p => p.IdPlan)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Socio>()
                 .HasOne(s => s.Usuario)
@@ -46,7 +48,8 @@ namespace GymBackend.Data
             modelBuilder.Entity<Asistencia>()
                 .HasOne(a => a.Socio)
                 .WithMany(s => s.Asistencias)
-                .HasForeignKey(a => a.IdSocio);
+                .HasForeignKey(a => a.IdSocio)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Precision para DECIMAL
             modelBuilder.Entity<Pago>()

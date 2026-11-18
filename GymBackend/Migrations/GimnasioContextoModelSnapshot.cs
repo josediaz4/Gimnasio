@@ -228,7 +228,7 @@ namespace GymBackend.Migrations
                     b.HasOne("GymBackend.Models.Socio", "Socio")
                         .WithMany("Asistencias")
                         .HasForeignKey("IdSocio")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Socio");
@@ -239,13 +239,13 @@ namespace GymBackend.Migrations
                     b.HasOne("GymBackend.Models.PlanPago", "Plan")
                         .WithMany("Pagos")
                         .HasForeignKey("IdPlan")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("GymBackend.Models.Socio", "Socio")
                         .WithMany("Pagos")
                         .HasForeignKey("IdSocio")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Plan");

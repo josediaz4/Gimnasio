@@ -39,7 +39,7 @@ namespace GymBackend.Data
                     {
                         Email = "admin@gym.com",
                         ContraseñaHash = "1234",
-                        Rol = "Admin"
+                        Rol = "Administrador"
                     }
                     );
             }

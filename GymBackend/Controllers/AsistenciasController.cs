@@ -1,5 +1,6 @@
 ﻿using GymBackend.Data;
 using GymBackend.DTOs;
+using GymBackend.Enums;
 using GymBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -98,6 +99,9 @@ namespace GymBackend.Controllers
             var socio = await _contexto.Socios.FirstOrDefaultAsync(s => s.IdSocio == dto.IdSocio);
             if (socio == null)
                 return NotFound("Socio no encontrado.");
+
+            if (socio.EstadoMembresia == EstadoMembresia.Suspendido)
+                return BadRequest("El socio está suspendido.");
 
             var ultimoPago = await _contexto.Pagos
                 .Include(p => p.Plan)

@@ -77,6 +77,8 @@ namespace GymBackend.Controllers
         {
             var plan = await _contexto.PlanesPago.FindAsync(id);
             if (plan == null) return NotFound();
+            if (await _contexto.Pagos.AnyAsync(p => p.IdPlan == id))
+                return BadRequest("No se puede eliminar un plan con pagos registrados.");
 
             _contexto.PlanesPago.Remove(plan);
             await _contexto.SaveChangesAsync();
