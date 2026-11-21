@@ -1,6 +1,7 @@
 ﻿using GymBackend.Data;
 using GymBackend.DTOs;
 using GymBackend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using System.Text;
 namespace GymBackend.Controllers
 {
     [ApiController]
+    [AllowAnonymous]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
@@ -26,6 +28,7 @@ namespace GymBackend.Controllers
             _hasher = hasher;
         }
 
+        //POST: api/auth/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO login)
         {
