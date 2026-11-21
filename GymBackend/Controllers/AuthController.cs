@@ -1,12 +1,12 @@
 ﻿using GymBackend.Data;
 using GymBackend.DTOs;
 using GymBackend.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace GymBackend.Controllers
@@ -17,11 +17,13 @@ namespace GymBackend.Controllers
     {
         private readonly GimnasioContexto _contexto;
         private readonly IConfiguration _config;
+        private readonly IPasswordHasher<Usuario> _hasher;
 
-        public AuthController(GimnasioContexto contexto, IConfiguration config)
+        public AuthController(GimnasioContexto contexto, IConfiguration config, IPasswordHasher<Usuario> hasher)
         {
             _contexto = contexto;
             _config = config;
+            _hasher = hasher;
         }
 
         [HttpPost("login")]
@@ -29,19 +31,25 @@ namespace GymBackend.Controllers
         {
             var usuario = await _contexto.Usuarios.FirstOrDefaultAsync(u => u.Email == login.Email);
 
-            //TODO: Cambiar cuando salga de produccion
-            //if (usuario == null || usuario.ContraseñaHash != HashPassword(login.Password))
-            if (usuario == null || usuario.ContraseñaHash != login.Password)
+            var resultado = usuario == null
+                ? PasswordVerificationResult.Failed
+                : _hasher.VerifyHashedPassword(usuario, usuario.ContraseñaHash, login.Password);
+
+            if (resultado == PasswordVerificationResult.Failed)
                 return Unauthorized("Credenciales inválidas.");
 
-            var token = GenerateJwtToken(usuario);
-            return Ok(new { token });
+            return Ok(new
+            {
+                token = GenerateJwtToken(usuario!),
+                usuario = new { email = usuario!.Email, rol = usuario.Rol }
+            });
         }
 
         private string GenerateJwtToken(Usuario usuario)
         {
             var claims = new[]
             {
+                new Claim("sub", usuario.IdUsuario.ToString()),
                 new Claim("name", usuario.Email),
                 new Claim("role", usuario.Rol)
             };
@@ -60,12 +68,12 @@ namespace GymBackend.Controllers
         }
 
         // Método privado para hashear contraseñas
-        private static string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = sha256.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
-        }
+        //private static string HashPassword(string password)
+        //{
+        //    using var sha256 = SHA256.Create();
+        //    var bytes = Encoding.UTF8.GetBytes(password);
+        //    var hash = sha256.ComputeHash(bytes);
+        //    return Convert.ToBase64String(hash);
+        //}
     }
 }

@@ -3,10 +3,9 @@ using GymBackend.Data;
 using GymBackend.DTOs;
 using GymBackend.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace GymBackend.Controllers
 {
@@ -16,11 +15,13 @@ namespace GymBackend.Controllers
     {
         private readonly GimnasioContexto _contexto;
         private readonly IMapper _mapper;
+        private readonly IPasswordHasher<Usuario> _hasher;
 
-        public UsuarioController(GimnasioContexto contexto, IMapper mapper)
+        public UsuarioController(GimnasioContexto contexto, IMapper mapper, IPasswordHasher<Usuario> hasher)
         {
             _contexto = contexto;
             _mapper = mapper;
+            _hasher = hasher;
         }
 
         //GET: api/usuarios
@@ -50,11 +51,12 @@ namespace GymBackend.Controllers
             if (emailExiste)
                 return BadRequest("Ya existe un usuario con este email.");
 
-            var usuario = _mapper.Map<Usuario>(usuarioDTO);
 
-            // TODO: Descomentar cuando salga de produccion
-            //Hashear contraseña antes de guardar
-            //usuario.ContraseñaHash = HashPassword(usuarioDTO.Password);
+            if (string.IsNullOrWhiteSpace(usuarioDTO.Password) || usuarioDTO.Password.Length < 6)
+                return BadRequest("La contraseña debe tener al menos 6 caracteres.");
+
+            var usuario = _mapper.Map<Usuario>(usuarioDTO);
+            usuario.ContraseñaHash = _hasher.HashPassword(usuario, usuarioDTO.Password);
 
             _contexto.Usuarios.Add(usuario);
             await _contexto.SaveChangesAsync();
@@ -120,9 +122,9 @@ namespace GymBackend.Controllers
             var usuario = new Usuario
             {
                 Email = socio.Email,
-                Rol = "Socio",
-                ContraseñaHash = "123456"
+                Rol = "Socio"
             };
+            usuario.ContraseñaHash = _hasher.HashPassword(usuario, socio.DNI);
 
             _contexto.Usuarios.Add(usuario);
             await _contexto.SaveChangesAsync();
@@ -147,20 +149,13 @@ namespace GymBackend.Controllers
             if (usuario == null)
                 return NotFound("El usuario no existe.");
 
-            usuario.ContraseñaHash = HashPassword(nuevaPass);
+            if (string.IsNullOrWhiteSpace(nuevaPass) || nuevaPass.Length < 6)
+                return BadRequest("La contraseña debe tener al menos 6 caracteres.");
+
+            usuario.ContraseñaHash = _hasher.HashPassword(usuario, nuevaPass);
             await _contexto.SaveChangesAsync();
 
             return NoContent();
         }
-
-        // Método privado para hashear contraseñas
-        private static string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = sha256.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
-        }
-
     }
 }

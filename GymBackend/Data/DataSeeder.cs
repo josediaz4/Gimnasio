@@ -1,4 +1,6 @@
 ﻿using GymBackend.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GymBackend.Data
 {
@@ -6,6 +8,8 @@ namespace GymBackend.Data
     {
         public static async Task SeedAsync(GimnasioContexto contexto)
         {
+            var hasher = new PasswordHasher<Usuario>();
+
             if (!contexto.PlanesPago.Any())
             {
                 contexto.PlanesPago.AddRange(
@@ -34,14 +38,25 @@ namespace GymBackend.Data
             }
             if (!contexto.Usuarios.Any())
             {
-                contexto.Usuarios.Add(
-                    new Usuario
-                    {
-                        Email = "admin@gym.com",
-                        ContraseñaHash = "1234",
-                        Rol = "Administrador"
-                    }
-                    );
+                var admin = new Usuario
+                {
+                    Email = "admin@gym.com",
+                    Rol = "Administrador"
+                };
+                admin.ContraseñaHash = hasher.HashPassword(admin, "1234");
+                contexto.Usuarios.Add(admin);
+            }
+            await contexto.SaveChangesAsync();
+
+            // Migración única: pasa a hash las contraseñas que seguían en texto plano
+            // (un hash mide 84 caracteres; el texto plano, mucho menos)
+            var sinHash = await contexto.Usuarios
+                .Where(u => u.ContraseñaHash.Length < 60)
+                .ToListAsync();
+
+            foreach (var u in sinHash)
+            {
+                u.ContraseñaHash = hasher.HashPassword(u, u.ContraseñaHash);
             }
             await contexto.SaveChangesAsync();
         }
