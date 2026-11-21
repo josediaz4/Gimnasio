@@ -31,7 +31,9 @@ namespace GymBackend.Controllers
                     IdSocio = a.IdSocio,
                     NombreCompletoSocio = a.Socio.Nombre + " " + a.Socio.Apellido,
                     FechaAsistencia = a.FechaAsistencia,
-                    AsistenciaValida = a.AsistenciaValida
+                    AsistenciaValida = a.AsistenciaValida,
+                    IdHorario = a.IdHorario,
+                    NombreActividad = a.Horario != null ? a.Horario.NombreActividad : null
                 }).ToListAsync();
 
             return Ok(asistencias);
@@ -52,7 +54,9 @@ namespace GymBackend.Controllers
                             {
                                 IdAsistencia = a.IdAsistencia,
                                 FechaAsistencia = a.FechaAsistencia,
-                                AsistenciaValida = a.AsistenciaValida
+                                AsistenciaValida = a.AsistenciaValida,
+                                IdHorario = a.IdHorario,
+                                NombreActividad = a.Horario != null ? a.Horario.NombreActividad : null
                             }).ToListAsync();
 
             return Ok(asistencias);
@@ -103,6 +107,14 @@ namespace GymBackend.Controllers
             if (socio.EstadoMembresia == EstadoMembresia.Suspendido)
                 return BadRequest("El socio está suspendido.");
 
+            var horario = await _contexto.Horarios.FindAsync(dto.IdHorario);
+            if (horario == null)
+                return NotFound("La clase no existe.");
+
+            var inscripto = await _contexto.Inscripciones.AnyAsync(i => i.IdSocio == dto.IdSocio && i.IdHorario == dto.IdHorario);
+            if (!inscripto)
+                return BadRequest("El socio no está inscripto en esta clase.");
+
             var ultimoPago = await _contexto.Pagos
                 .Include(p => p.Plan)
                 .Where(p => p.IdSocio == dto.IdSocio)
@@ -130,6 +142,7 @@ namespace GymBackend.Controllers
             var asistencia = new Asistencia
             {
                 IdSocio = dto.IdSocio,
+                IdHorario = dto.IdHorario,
                 FechaAsistencia = DateTime.UtcNow,
                 AsistenciaValida = true
             };

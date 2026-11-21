@@ -11,7 +11,7 @@ namespace GymBackend.Models
         [Required]
         public DateTime FechaPago { get; set; }
         public DateTime FechaVencimiento { get; set; }
-        [Range(1000, 100000, ErrorMessage = "El precio debe estar entre {0} y {1}.")]
+        [Range(1000, 100000, ErrorMessage = "El precio debe estar entre {1} y {2}.")]
         public decimal Monto { get; set; }
         public string MetodoPago { get; set; }
 

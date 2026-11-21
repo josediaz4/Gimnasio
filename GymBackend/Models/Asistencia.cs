@@ -8,9 +8,11 @@ namespace GymBackend.Models
         public int IdAsistencia { get; set; }
         [Required]
         public int IdSocio { get; set; }
+        public int? IdHorario { get; set; }
         [Required]
         public DateTime FechaAsistencia { get; set; }
         public Socio Socio { get; set; }
+        public Horario? Horario { get; set; }
         public bool AsistenciaValida { get; set; } = true;
     }
 }

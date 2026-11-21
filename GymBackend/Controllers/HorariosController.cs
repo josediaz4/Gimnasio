@@ -24,7 +24,8 @@ namespace GymBackend.Controllers
         public async Task<ActionResult<IEnumerable<HorarioDTO>>> GetHorarios()
         {
             var horarios = await _contexto.Horarios.ToListAsync();
-            return _mapper.Map<List<HorarioDTO>>(horarios);
+            var ordenados = horarios.OrderBy(h => h.DiaSemana).ThenBy(h => h.HoraInicio).ToList();
+            return _mapper.Map<List<HorarioDTO>>(ordenados);
         }
 
         // GET: api/horarios/5
@@ -66,6 +67,10 @@ namespace GymBackend.Controllers
             if (horario == null)
                 return NotFound("El horario no exíste.");
 
+            var inscriptos = await _contexto.Inscripciones.CountAsync(i => i.IdHorario == id);
+            if (horarioDTO.CapacidadMaxima < inscriptos)
+                return BadRequest($"La clase ya tiene {inscriptos} inscriptos; la capacidad no puede ser menor.");
+
             _mapper.Map(horarioDTO, horario);  //<--actualiza las propiedades
             await _contexto.SaveChangesAsync();
 
@@ -79,6 +84,9 @@ namespace GymBackend.Controllers
             var horario = await _contexto.Horarios.FindAsync(id);
             if (horario == null)
                 return NotFound("El horario no existe.");
+
+            if (await _contexto.Inscripciones.AnyAsync(i => i.IdHorario == id) || await _contexto.Asistencias.AnyAsync(a => a.IdHorario == id))
+                return BadRequest("No se puede eliminar una clase con inscriptos o asistencias registradas.");
 
             _contexto.Horarios.Remove(horario);
             await _contexto.SaveChangesAsync();

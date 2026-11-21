@@ -7,5 +7,8 @@
         public string NombreCompletoSocio { get; set; }
         public DateTime FechaAsistencia { get; set; }
         public bool AsistenciaValida { get; set; }
+
+        public int? IdHorario { get; set; }
+        public string? NombreActividad { get; set; }
     }
 }

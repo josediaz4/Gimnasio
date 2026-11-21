@@ -36,10 +36,15 @@ namespace GymBackend.Migrations
                     b.Property<DateTime>("FechaAsistencia")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("IdHorario")
+                        .HasColumnType("int");
+
                     b.Property<int>("IdSocio")
                         .HasColumnType("int");
 
                     b.HasKey("IdAsistencia");
+
+                    b.HasIndex("IdHorario");
 
                     b.HasIndex("IdSocio");
 
@@ -59,7 +64,8 @@ namespace GymBackend.Migrations
 
                     b.Property<string>("DiaSemana")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
 
                     b.Property<TimeSpan>("HoraFin")
                         .HasColumnType("time");
@@ -75,6 +81,33 @@ namespace GymBackend.Migrations
                     b.HasKey("IdHorario");
 
                     b.ToTable("Horarios");
+                });
+
+            modelBuilder.Entity("GymBackend.Models.Inscripcion", b =>
+                {
+                    b.Property<int>("IdInscripcion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdInscripcion"));
+
+                    b.Property<DateTime>("FechaInscripcion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdHorario")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdSocio")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdInscripcion");
+
+                    b.HasIndex("IdHorario");
+
+                    b.HasIndex("IdSocio", "IdHorario")
+                        .IsUnique();
+
+                    b.ToTable("Inscripciones");
                 });
 
             modelBuilder.Entity("GymBackend.Models.Pago", b =>
@@ -225,11 +258,37 @@ namespace GymBackend.Migrations
 
             modelBuilder.Entity("GymBackend.Models.Asistencia", b =>
                 {
+                    b.HasOne("GymBackend.Models.Horario", "Horario")
+                        .WithMany()
+                        .HasForeignKey("IdHorario")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("GymBackend.Models.Socio", "Socio")
                         .WithMany("Asistencias")
                         .HasForeignKey("IdSocio")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Horario");
+
+                    b.Navigation("Socio");
+                });
+
+            modelBuilder.Entity("GymBackend.Models.Inscripcion", b =>
+                {
+                    b.HasOne("GymBackend.Models.Horario", "Horario")
+                        .WithMany()
+                        .HasForeignKey("IdHorario")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GymBackend.Models.Socio", "Socio")
+                        .WithMany()
+                        .HasForeignKey("IdSocio")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Horario");
 
                     b.Navigation("Socio");
                 });

@@ -16,6 +16,7 @@ namespace GymBackend.Data
         public DbSet<Horario> Horarios { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Asistencia> Asistencias { get; set; }
+        public DbSet<Inscripcion> Inscripciones { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,33 @@ namespace GymBackend.Data
                 .HasOne(a => a.Socio)
                 .WithMany(s => s.Asistencias)
                 .HasForeignKey(a => a.IdSocio)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Horario>()
+                .Property(h => h.DiaSemana)
+                .HasConversion<string>()
+                .HasMaxLength(15);
+
+            modelBuilder.Entity<Inscripcion>()
+                .HasOne(i => i.Socio)
+                .WithMany()
+                .HasForeignKey(i => i.IdSocio)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Inscripcion>()
+                .HasOne(i => i.Horario)
+                .WithMany()
+                .HasForeignKey(i => i.IdHorario)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Inscripcion>()
+                .HasIndex(i => new { i.IdSocio, i.IdHorario })
+                .IsUnique();
+
+            modelBuilder.Entity<Asistencia>()
+                .HasOne(a => a.Horario)
+                .WithMany()
+                .HasForeignKey(a => a.IdHorario)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Precision para DECIMAL
