@@ -30,5 +30,7 @@ namespace GymBackend.DTOs.Socio
         [Required(ErrorMessage = "El método de pago es obligatorio.")]
         [RegularExpression("^(Efectivo|Transferencia)$", ErrorMessage = "El método de pago debe ser Efectivo o Transferencia.")]
         public string MetodoPago { get; set; }
+
+        public  List<int>? IdsHorarios{ get; set; }
     }
 }

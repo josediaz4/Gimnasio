@@ -17,6 +17,8 @@ namespace GymBackend.DTOs
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
 
+        public int Inscriptos { get; set; }
+
         [Range(1, 100, ErrorMessage = "La capacidad debe estar entre {1} y {2}.")]
         public int CapacidadMaxima { get; set; }
 

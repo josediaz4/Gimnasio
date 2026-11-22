@@ -24,8 +24,23 @@ namespace GymBackend.Controllers
         public async Task<ActionResult<IEnumerable<HorarioDTO>>> GetHorarios()
         {
             var horarios = await _contexto.Horarios.ToListAsync();
-            var ordenados = horarios.OrderBy(h => h.DiaSemana).ThenBy(h => h.HoraInicio).ToList();
-            return _mapper.Map<List<HorarioDTO>>(ordenados);
+
+            var conteo = await _contexto.Inscripciones
+                .GroupBy(i => i.IdHorario)
+                .Select(g => new { IdHorario = g.Key, Cantidad = g.Count() })
+                .ToDictionaryAsync(x => x.IdHorario, x => x.Cantidad);
+
+            var resultado = horarios
+                .OrderBy(h => h.DiaSemana)
+                .ThenBy(h => h.HoraInicio)
+                .Select(h =>
+                {
+                    var dto = _mapper.Map<HorarioDTO>(h);
+                    dto.Inscriptos = conteo.GetValueOrDefault(h.IdHorario);
+                    return dto;
+                })
+                .ToList();
+            return resultado;
         }
 
         // GET: api/horarios/5

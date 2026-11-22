@@ -118,9 +118,10 @@ namespace GymBackend.Controllers
         public async Task<ActionResult<IEnumerable<ProximoVencimientoDTO>>> GetProximosVencimientos()
         {
             var hoy = DateTime.UtcNow.Date;
-            var fechaLimite = DateTime.UtcNow.AddDays(7);
+            var fechaLimite = hoy.AddDays(7);
 
             var pagos = await _contexto.Pagos
+                .AsNoTracking()
                 .Include(p => p.Socio)
                 .Include(p => p.Plan)
                 .ToListAsync();
@@ -167,6 +168,29 @@ namespace GymBackend.Controllers
 
                 if (plan == null)
                     return BadRequest("El plan seleccionado no existe.");
+
+                var idsHorarios = socioDTO.IdsHorarios?.Distinct().ToList() ?? new List<int>();
+                if(idsHorarios.Count > 0)
+                {
+                    var horarios = await _contexto.Horarios
+                        .Where(h => idsHorarios.Contains(h.IdHorario))
+                        .ToListAsync();
+
+                    if (horarios.Count != idsHorarios.Count)
+                        return BadRequest("Alaguna de las clases seleccionadas no existe");
+
+                    var ocupados = await _contexto.Inscripciones
+                        .Where(i => idsHorarios.Contains(i.IdHorario))
+                        .GroupBy(i => i.IdHorario)
+                        .Select(g => new { IdHorario = g.Key, Cantidad = g.Count() })
+                        .ToDictionaryAsync(x => x.IdHorario, x => x.Cantidad);
+
+                    var llena = horarios.FirstOrDefault(h => ocupados.GetValueOrDefault(h.IdHorario) >= h.CapacidadMaxima);
+                    if (llena != null)
+                        return BadRequest($"La clase \"{llena.NombreActividad}\" no tiene cupos disponibles");
+
+                }
+
                 //Crear socio
                 var socio = _mapper.Map<Socio>(socioDTO);
 
@@ -186,6 +210,18 @@ namespace GymBackend.Controllers
                     MetodoPago = socioDTO.MetodoPago
                 };
                 _contexto.Pagos.Add(pago);
+                await _contexto.SaveChangesAsync();
+
+                //Inscribir en las clases elegidas
+                foreach (var idHorario in idsHorarios)
+                {
+                    _contexto.Inscripciones.Add(new Inscripcion
+                    {
+                        IdSocio = socio.IdSocio,
+                        IdHorario = idHorario,
+                        FechaInscripcion = DateTime.UtcNow
+                    });
+                }
                 await _contexto.SaveChangesAsync();
 
                 await transaction.CommitAsync();
