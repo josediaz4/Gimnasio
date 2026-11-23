@@ -3,26 +3,29 @@ using GymBackend.Middlewares;
 using GymBackend.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Configuracion de CORS
+// CORS: los orígenes permitidos salen de la configuración
+var origenes = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+    ?? new[] { "http://localhost:5173", "https://localhost:5173", "https://gymfrontreact.diaz-jose-mnuel-04.workers.dev" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:5173",
-            "https://localhost:5173")
-        .AllowAnyMethod()
-        .AllowAnyHeader();
+        policy
+        .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
@@ -124,8 +127,29 @@ builder.Services.AddAuthorization(options =>
     .Build();
 });
 
-builder.Services.AddAuthorization();
+// El hosting está detrás de un proxy: así se ve la IP real del cliente
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
+// Límite de intentos de login: 5 por minuto por IP
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocido",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
 
 var app = builder.Build();
 
@@ -135,11 +159,12 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider
         .GetRequiredService<GimnasioContexto>();
 
-    await DataSeeder.SeedAsync(context);
+    await context.Database.MigrateAsync();
+    await DataSeeder.SeedAsync(context, app.Configuration);
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -148,6 +173,8 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = String.Empty;
     });
 }
+
+app.UseForwardedHeaders();
 //Middleware global de excepciones
 app.UseMiddleware<ExceptionMiddleware>();
 
@@ -156,6 +183,8 @@ app.UseHttpsRedirection();
 
 //activamos politicas CORS
 app.UseCors("ReactPolicy");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 

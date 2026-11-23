@@ -10,6 +10,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+using Microsoft.AspNetCore.RateLimiting;
+
 namespace GymBackend.Controllers
 {
     [ApiController]
@@ -30,6 +32,7 @@ namespace GymBackend.Controllers
 
         //POST: api/auth/login
         [HttpPost("login")]
+        [EnableRateLimiting("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO login)
         {
             var usuario = await _contexto.Usuarios.FirstOrDefaultAsync(u => u.Email == login.Email);

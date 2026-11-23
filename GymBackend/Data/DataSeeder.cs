@@ -6,7 +6,7 @@ namespace GymBackend.Data
 {
     public class DataSeeder
     {
-        public static async Task SeedAsync(GimnasioContexto contexto)
+        public static async Task SeedAsync(GimnasioContexto contexto, IConfiguration config)
         {
             var hasher = new PasswordHasher<Usuario>();
 
@@ -38,12 +38,15 @@ namespace GymBackend.Data
             }
             if (!contexto.Usuarios.Any())
             {
-                var admin = new Usuario
-                {
-                    Email = "admin@gym.com",
-                    Rol = "Administrador"
-                };
-                admin.ContraseñaHash = hasher.HashPassword(admin, "1234");
+                var email = config["Admin:Email"] ?? "admin@gym.com";
+                var password = config["Admin:Password"];
+
+                if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+                    throw new InvalidOperationException(
+                        "Configurá Admin:Password (mínimo 8 caracteres) para crear el administrador inicial.");
+
+                var admin = new Usuario { Email = email, Rol = "Administrador" };
+                admin.ContraseñaHash = hasher.HashPassword(admin, password);
                 contexto.Usuarios.Add(admin);
             }
             await contexto.SaveChangesAsync();

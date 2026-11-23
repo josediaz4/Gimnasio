@@ -6,9 +6,15 @@ namespace GymBackend.Middlewares
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-        public ExceptionMiddleware(RequestDelegate next)
+        private readonly IHostEnvironment _env;
+        private readonly ILogger<ExceptionMiddleware> _logger;
+
+        public ExceptionMiddleware(RequestDelegate next, IHostEnvironment env,
+            ILogger<ExceptionMiddleware> logger)
         {
             _next = next;
+            _env = env;
+            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext httpContext)
@@ -19,11 +25,12 @@ namespace GymBackend.Middlewares
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error no controlado en {Path}", httpContext.Request.Path);
                 await HandleExceptionAsync(httpContext, ex);
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             int statusCode = (int)HttpStatusCode.InternalServerError;
             string message = "Ocurrió un error inesperado en el servidor.";
@@ -48,7 +55,7 @@ namespace GymBackend.Middlewares
             {
                 StatusCode = statusCode,
                 Message = message,
-                Detail = exception.Message
+                Detail = _env.IsDevelopment() ? exception.Message : null
             };
 
             context.Response.ContentType = "application/json";
